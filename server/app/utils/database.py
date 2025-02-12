@@ -41,20 +41,18 @@ class DatabaseClient:
             raise RuntimeError("DatabaseClient instance not initialized")
         return cls._instance
 
-    async def post(self, table_name: str, data: BaseModel) -> list[BaseModel]:
+    async def post(self, table_name: str, data: BaseModel) -> list:
         if not self._client:
             raise TypeError("Database client is not initialized when executing a POST request")
-        return [
-            BaseModel.model_validate(row)
-            for row in await self._client.table(table_name).insert(data.model_dump()).execute()
-        ]
+        response = await self._client.table(table_name).insert(data.model_dump()).execute()
+        return response.data
 
     async def get(
         self,
         table_name: str,
         column_names: list[str] = [],
         boolean_clause: Optional[BooleanClause] = None,
-    ) -> list[BaseModel]:
+    ) -> list:
         if not self._client:
             raise TypeError("Database client is not initialized when executing a GET request")
 
@@ -64,7 +62,8 @@ class DatabaseClient:
         query: AsyncQueryRequestBuilder = apply_boolean_clause(
             query=query, boolean_clause=boolean_clause
         )
-        return [BaseModel.model_validate(row) for row in await query.execute()]
+        response = await query.execute()
+        return response.data
 
     async def patch(
         self,
@@ -79,4 +78,14 @@ class DatabaseClient:
         query = apply_boolean_clause(query=query, boolean_clause=boolean_clause)
 
         response = await query.execute()
+        return response.data
+
+    async def execute_rpc(self, rpc: str, params: Optional[dict] = None) -> list:
+        """
+        Executes a stored procedure call.
+        """
+        if not self._client:
+            raise TypeError("Database client is not initialized when executing a RPC request")
+
+        response = await self._client.rpc(rpc, params).execute()
         return response.data

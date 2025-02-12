@@ -19,19 +19,8 @@ class GradeValue(StrEnum):
     F = "F"
 
 
-class SemesterValue(Enum):
-    ONE = auto()
-    TWO = auto()
-    THREE = auto()
-    FOUR = auto()
-    FIVE = auto()
-    SIX = auto()
-    SEVEN = auto()
-    EIGHT = auto()
-
-
 class Grade(BaseModel):
     id: int
     student_id: int
     grade: GradeValue
-    semester: SemesterValue
+    semester: int
