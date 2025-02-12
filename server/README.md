@@ -17,6 +17,13 @@ eval "$(poetry env activate)"
 .venv\Scripts\Activate.ps1
 ```
 
+## Configure VSCode Python Interpreter to use Poetry's virtual environment
+
+1. Close VSCode so that it is able to detect the newly created virtual environment. A lot of times, this alone is enough to fix the issue.
+2. In the command palette, type `Python: Select Interpreter`
+3. Type `poetry` in the search box
+4. The first option should be what you want to use
+
 ## Set up environment variables
 
 ```bash
