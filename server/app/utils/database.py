@@ -13,7 +13,7 @@ from app.utils.boolean_clause import (
 
 
 class DatabaseClient:
-    _instance: "DatabaseClient"
+    _instance: Optional["DatabaseClient"] = None
     _client: Optional[Client] = None
 
     def __new__(cls):
@@ -36,19 +36,25 @@ class DatabaseClient:
         if not cls._instance:
             client = cls()
             await client._init()
+
+        if cls._instance is None:
+            raise RuntimeError("DatabaseClient instance not initialized")
         return cls._instance
 
-    async def post(self, table_name: str, data: BaseModel):
+    async def post(self, table_name: str, data: BaseModel) -> list[BaseModel]:
         if not self._client:
             raise TypeError("Database client is not initialized when executing a POST request")
-        return await self._client.table(table_name).insert(data.model_dump()).execute()
+        return [
+            BaseModel.model_validate(row)
+            for row in await self._client.table(table_name).insert(data.model_dump()).execute()
+        ]
 
     async def get(
         self,
         table_name: str,
         column_names: list[str] = [],
         boolean_clause: Optional[BooleanClause] = None,
-    ):
+    ) -> list[BaseModel]:
         if not self._client:
             raise TypeError("Database client is not initialized when executing a GET request")
 
@@ -58,4 +64,19 @@ class DatabaseClient:
         query: AsyncQueryRequestBuilder = apply_boolean_clause(
             query=query, boolean_clause=boolean_clause
         )
-        return await query.execute()
+        return [BaseModel.model_validate(row) for row in await query.execute()]
+
+    async def patch(
+        self,
+        table_name: str,
+        data: dict,
+        boolean_clause: Optional[BooleanClause] = None,
+    ) -> list:
+        if not self._client:
+            raise TypeError("Database client is not initialized when executing a PATCH request")
+
+        query = self._client.table(table_name).update(data)
+        query = apply_boolean_clause(query=query, boolean_clause=boolean_clause)
+
+        response = await query.execute()
+        return response.data

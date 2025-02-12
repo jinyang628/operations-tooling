@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter
 
+from app.controllers.students import StudentsController
 from app.services.students import StudentsService
 
 log = logging.getLogger(__name__)
